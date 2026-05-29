@@ -189,4 +189,4 @@ Comment out or remove the three hook entries in `~/.claude/settings.json`. The s
 
 ## License
 
-MIT. See `LICENSE`.
+MIT. See [LICENSE](LICENSE).
