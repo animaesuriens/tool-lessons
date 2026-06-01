@@ -9,7 +9,8 @@ const fs = require('fs');
 const path = require('path');
 
 const HOME = process.env.USERPROFILE || process.env.HOME;
-const LESSONS_FILE = path.join(HOME, '.claude', 'tool-lessons', 'lessons.md');
+const BASE = process.env.TOOL_LESSONS_DIR || path.join(HOME, '.claude', 'tool-lessons');
+const LESSONS_FILE = path.join(BASE, 'lessons.md');
 
 function readStdin() {
   return new Promise((resolve) => {

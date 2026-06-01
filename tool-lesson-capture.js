@@ -13,7 +13,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const HOME = process.env.USERPROFILE || process.env.HOME;
-const BASE = path.join(HOME, '.claude', 'tool-lessons');
+const BASE = process.env.TOOL_LESSONS_DIR || path.join(HOME, '.claude', 'tool-lessons');
 const ERRORS_FILE = path.join(BASE, 'errors.json');
 const AUDIT_FILE = path.join(BASE, 'audit.jsonl');
 const LESSONS_FILE = path.join(BASE, 'lessons.md');
@@ -47,6 +47,14 @@ function isErrorResponse(input) {
 }
 
 function extractErrorMessage(input) {
+  // PostToolUseFailure (e.g. a failed Bash command, an errored Agent/MCP call)
+  // carries the message at the top-level `error` field and ships no
+  // `tool_response`. Read it first, stripping the leading "Exit code N" line so
+  // the signature keys on the real message. Commands that exit non-zero with no
+  // output collapse to '' and get filtered upstream (grep no-match, test, etc.).
+  if (typeof input.error === 'string' && input.error.length > 0) {
+    return input.error.replace(/^Exit code \d+\s*/i, '');
+  }
   const resp = input.tool_response;
   if (!resp) return '';
   if (typeof resp === 'string') return resp;
@@ -101,6 +109,9 @@ async function main() {
   let input;
   try { input = JSON.parse(raw); } catch { process.exit(0); }
   if (!isErrorResponse(input)) process.exit(0);
+  // User-cancelled / interrupted tools surface as failures but are not
+  // tool-discipline traps worth learning from. Skip them.
+  if (input.is_interrupt === true) process.exit(0);
 
   const tool = input.tool_name || 'unknown';
   const msg = extractErrorMessage(input);
