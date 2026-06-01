@@ -179,6 +179,26 @@ The inject hook only picks up lines starting with `-` under a `## ToolName` head
 
 None of these need to be committed anywhere — they're per-machine state.
 
+Set `TOOL_LESSONS_DIR` to point both hooks at a different state directory (used by the test suite to stay out of your real `~/.claude/tool-lessons/`; also handy if you want project-local rules).
+
+---
+
+## Tests
+
+Zero-dependency, using the Node 18+ built-in test runner. Each test runs the
+real hooks against synthetic payloads in a throwaway `TOOL_LESSONS_DIR`, so your
+own state is never touched.
+
+```bash
+npm test        # or: node --test
+```
+
+Coverage includes the failure shape that matters most: a `PostToolUseFailure`
+delivers the message in a top-level `error` field with **no `tool_response`**
+(this is how a non-zero `Bash` exit, or a failed `Agent`/MCP call, arrives).
+Reading only `tool_response` silently drops every one of those — the regression
+this suite guards against.
+
 ---
 
 ## Disabling
